@@ -2,51 +2,54 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-[System.Serializable]
-public class AssetReferenceAudioClip : AssetReferenceT<AudioClip>
-{
-    public AssetReferenceAudioClip(string guid) : base(guid){}
-}
 public class AddressableAsset : MonoBehaviour
 {
-    [SerializeField] private AssetReferenceGameObject _assetReference;
-    [SerializeField] private AssetReferenceAudioClip _assetReferenceAudioClip;
-    GameObject LoadedObject;
+    public AssetReference assetReference; // Drag your addressable reference here
+    private GameObject instantiatedObject;
 
-    void Update()
+    // Instantiate the Addressable object
+    public void InstantiateAddressableObject()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            _assetReference.LoadAssetAsync<GameObject>().Completed += (asyncOperationHandleComplete) =>
-            {
-                if (asyncOperationHandleComplete.Status == AsyncOperationStatus.Succeeded)
-                {
-                    //_assetReference.InstantiateAsync();
-                    LoadedObject = asyncOperationHandleComplete.Result;
-                    Instantiate(LoadedObject);
-                    //_assetReference.ReleaseAsset();
-                }
-                else
-                {
-                    Debug.LogError("Failed to Load.");
-                }
-            };
-        }
-        if (Input.GetKeyDown(KeyCode.Backspace))
-        {
-            Addressables.Release(LoadedObject);
-            DestroyImmediate(LoadedObject, true);
+        // Load the Addressable asynchronously
+        Addressables.InstantiateAsync(assetReference).Completed += OnAddressableInstantiated;
     }
 
-/*    private void AsyncOperationHandleComplete(AsyncOperationHandle<GameObject> asyncOperationHandle)
+    private void OnAddressableInstantiated(AsyncOperationHandle<GameObject> obj)
     {
-        if (asyncOperationHandle.Status == AsyncOperationStatus.Succeeded)
+        if (obj.Status == AsyncOperationStatus.Succeeded)
         {
-            Instantiate(asyncOperationHandle.Result);
+            instantiatedObject = obj.Result; // Get the instantiated object
+            Debug.Log("Object instantiated!");
         }
         else
         {
-            Debug.LogError("Failed to Load.");
+            Debug.LogError("Failed to instantiate Addressable!");
         }
-    }*/
+    }
+
+    // Destroy the instantiated object and release the Addressable
+    public void DestroyAddressableObject()
+    {
+        if (instantiatedObject != null)
+        {
+            // Release the Addressable asset from memory
+            Addressables.Release(instantiatedObject);
+
+            // Destroy the instantiated object
+            Destroy(instantiatedObject);
+            Debug.Log("Object destroyed!");
+        }
+        else
+        {
+            Debug.LogWarning("No object to destroy.");
+        }
+    }
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            InstantiateAddressableObject();
+        }
+        else if (Input.GetKeyDown(KeyCode.Backspace)) { DestroyAddressableObject(); }
+    }
 }
