@@ -11,6 +11,7 @@ public class AddressableAsset : MonoBehaviour
 {
     [SerializeField] private AssetReferenceGameObject _assetReference;
     [SerializeField] private AssetReferenceAudioClip _assetReferenceAudioClip;
+    GameObject LoadedObject;
 
     void Update()
     {
@@ -20,7 +21,10 @@ public class AddressableAsset : MonoBehaviour
             {
                 if (asyncOperationHandleComplete.Status == AsyncOperationStatus.Succeeded)
                 {
-                    Instantiate(asyncOperationHandleComplete.Result);
+                    //_assetReference.InstantiateAsync();
+                    LoadedObject = asyncOperationHandleComplete.Result;
+                    Instantiate(LoadedObject);
+                    //_assetReference.ReleaseAsset();
                 }
                 else
                 {
@@ -28,6 +32,10 @@ public class AddressableAsset : MonoBehaviour
                 }
             };
         }
+        if (Input.GetKeyDown(KeyCode.Backspace))
+        {
+            Addressables.Release(LoadedObject);
+            DestroyImmediate(LoadedObject, true);
     }
 
 /*    private void AsyncOperationHandleComplete(AsyncOperationHandle<GameObject> asyncOperationHandle)
